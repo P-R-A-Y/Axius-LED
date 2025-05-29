@@ -1,23 +1,50 @@
-#include <Arduino.h>
 #include <vector>
-
 #include <AxiusSSD.h>
-extern AxiusSSD axius;
+#include <Adafruit_NeoPixel.h>
+
+#define STRIPPIN     D3
+#define NUMPIXELS    38
 
 class LEDNode : public Mod {
 public:
-  LEDNode() : strip(NUMPIXELS, STRIPPIN, NEO_GRB + NEO_KHZ800) {};
+  LEDNode(AxiusSSD* axiusInstance) : Mod(axiusInstance), strip(NUMPIXELS, STRIPPIN, NEO_GRB + NEO_KHZ800) {};
   void tick() override;
   void firsttick() override {
     strip.begin();
     strip.show();
+    lastAction = millis();
   };
-  void setup() override {};
+  void setup() override {
+    axius->setContrast(0);
+    axius->display.dim(false);
+  };
   String getName() override {return "STATIC LED MODES";}
 private:
   Adafruit_NeoPixel strip;
   uint8_t cursor = 0, startpos = 0, mode = 0;
-  bool fixedOnParameter = false;
+  bool fixedOnParameter = false, isScreenDisabled = false;
+  uint32_t lastScreenUpdate = 0, lastAction = 0;
+
+  struct Color {
+    uint8_t R, G, B;
+    void set(uint8_t r, uint8_t g, uint8_t b) {
+      R = r;
+      G = g;
+      B = b;
+    }
+    void mul(float r, float g, float b) {
+      R = uint8_t(r * R);
+      G = uint8_t(g * G);
+      B = uint8_t(b * B);
+    }  
+  };
+  
+  Color ledArray[NUMPIXELS];
+
+  void onClick() {
+    lastAction = millis();
+    axius->updateScreen = true;
+  }
 
   struct ParameterBase {
     String name;
@@ -125,11 +152,6 @@ private:
       }
     }},
   };
-
-
-
-
-
 
   void commit() {
     modes[mode].applyChanges(modes[mode].parameters);

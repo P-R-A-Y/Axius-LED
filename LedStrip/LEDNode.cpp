@@ -1,37 +1,57 @@
 #include "LEDNode.h"
 
 void LEDNode::tick() {
-  if (fixedOnParameter) {
-    if (axius.readdwn()) {
-      axius.updateScreen = true;
-      auto parameter = modes[mode].parameters[cursor-1];
-      (*(static_cast<ByteValue*>(parameter))).onDwn();
-      commit();
+  if (millis() - lastScreenUpdate > 5000) {
+    lastScreenUpdate = millis();
+    axius->updateScreen = true;
+  }
+
+  if (millis() - lastAction > 30000) {
+    if (!isScreenDisabled) {
+      isScreenDisabled = true;
+      axius->setDisplayPower(false);
     }
-    if (axius.readup()) {
-      axius.updateScreen = true;
+  } else {
+    if (isScreenDisabled) {
+      isScreenDisabled = false;
+      axius->setDisplayPower(true);
+      axius->updateScreen = true;
+    }
+  }
+
+  if (axius->clickY()) {
+    onClick();
+    if (isScreenDisabled) return;
+    if (fixedOnParameter) {
       auto parameter = modes[mode].parameters[cursor-1];
       (*(static_cast<ByteValue*>(parameter))).onUp();
       commit();
-    }
-  } else {
-    if (axius.readdwn()) {
-      axius.updateScreen = true;
+    } else {
       if (cursor < modes[mode].parameters.size()/*-1*/) {
         cursor++;
         if (cursor-startpos > 6) startpos++;
       }
     }
-    if (axius.readup()) {
-      axius.updateScreen = true;
+  }
+
+  if (axius->clickX()) {
+    onClick();
+    if (isScreenDisabled) return;
+    if (fixedOnParameter) {
+      auto parameter = modes[mode].parameters[cursor-1];
+      (*(static_cast<ByteValue*>(parameter))).onDwn();
+      commit();
+    } else {
       if (cursor > 0) {
-        cursor--;
-        if (cursor-startpos < 0) startpos--;
-      }
+          cursor--;
+          if (cursor-startpos < 0) startpos--;
+        }
     }
   }
-  if (axius.readok()) {
-    axius.updateScreen = true;
+  
+  if (axius->clickZ()) {
+    onClick();
+    if (isScreenDisabled) return;
     if (cursor == 0) {
       if (mode+1 >= modes.size()) mode = 0;
       else mode++;
@@ -44,12 +64,11 @@ void LEDNode::tick() {
         commit();
       }
     }
-    
-    
   }
+
   for (byte i = startpos; i < startpos + (modes[mode].parameters.size()+1 < 7 ? modes[mode].parameters.size()+1 : 7); i++) {
     if (i == 0) {
-      axius.drawTextSelector(modes[mode].name, i-startpos, i == cursor);
+      axius->drawTextSelector(modes[mode].name, i-startpos, i == cursor);
     } else {
       auto parameter = modes[mode].parameters[i-1];
       String name = parameter->name;
@@ -62,7 +81,7 @@ void LEDNode::tick() {
           name += ": false";
         }
       }
-      axius.drawTextSelectorWithBorder(name, i-startpos, i == cursor, (i == cursor && fixedOnParameter));
+      axius->drawTextSelectorWithBorder(name, i-startpos, i == cursor, (i == cursor && fixedOnParameter));
     }
     
   }

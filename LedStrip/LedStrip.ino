@@ -1,31 +1,12 @@
 uint32_t onBootFreeHeap = ESP.getFreeHeap();
 
-#define STRIPPIN     D3
-#define NUMPIXELS    38
-
 #include <Adafruit_NeoPixel.h>
 #include <vector>
 #include <AxiusSSD.h>
 AxiusSSD axius;
 
 #include "LEDNode.h"
-LEDNode LEDNode;
-
-struct Color {
-  uint8_t R, G, B;
-  void set(uint8_t r, uint8_t g, uint8_t b) {
-    R = r;
-    G = g;
-    B = b;
-  }
-  void mul(float r, float g, float b) {
-    R = uint8_t(r * R);
-    G = uint8_t(g * G);
-    B = uint8_t(b * B);
-  }  
-};
-
-Color ledArray[NUMPIXELS];
+LEDNode LEDNode(&axius);
 
 void setup() {
   randomSeed(148854271337);
@@ -42,6 +23,8 @@ void setup() {
   axius.setIncomingPacketListener(onIncomingPacket);
   axius.setIncomingPayloadListener(onIncomingPayload);
   axius.begin("AxiusLEDS v1", MemoryChip::c16, 10000.0f, D4, true, onBootFreeHeap);
+
+  LEDNode.firsttick();
 }
 
 void onIncomingPayload(float rssi, uint8_t sender, char* prefix, uint8_t payloadSize, uint8_t* payload) {
@@ -57,12 +40,12 @@ void onIncomingPacket(esppl_frame_info *info) {
 }
 
 bool isLockScreenOverrided() {
-  return false;
+  return true;
 }
 
 void lockScreenRender() {
-  axius.showStatusBar = false;
   axius.drawText("AFK MODE", -1);
+  axius.tryForceSwitchToMod(LEDNode.getName());
 }
 
 void loop() {
