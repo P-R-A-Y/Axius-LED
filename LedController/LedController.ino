@@ -22,7 +22,7 @@ void setup() {
   axius.setLockScreenOverrideChecker(isLockScreenOverrided);
   axius.setIncomingPacketListener(onIncomingPacket);
   axius.setIncomingPayloadListener(onIncomingPayload);
-  axius.begin("AxiusLEDS v1", MemoryChip::c16, 10000.0f, D4, true, onBootFreeHeap);
+  axius.begin("AxiusLED", MemoryChip::c16, 10000.0f, D4, true, onBootFreeHeap);
 
   LEDNode.firsttick();
 }

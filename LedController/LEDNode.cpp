@@ -66,7 +66,7 @@ void LEDNode::tick() {
     }
   }
 
-  for (byte i = startpos; i < startpos + (modes[mode].parameters.size()+1 < 7 ? modes[mode].parameters.size()+1 : 7); i++) {
+  for (uint8_t i = startpos; i < startpos + (modes[mode].parameters.size()+1 < 7 ? modes[mode].parameters.size()+1 : 7); i++) {
     if (i == 0) {
       axius->drawTextSelector(modes[mode].name, i-startpos, i == cursor);
     } else {
